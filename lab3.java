@@ -172,6 +172,9 @@ class lab3 {
                     s(1);
                     break;
                 }
+            case("o"):
+                o(data_mem);
+                break;
             default:
                 return -1;
             }
@@ -232,6 +235,9 @@ class lab3 {
                         parseMCode(mCodes, reg_file, data_mem, funcs);
                         s(1);
                     }
+                    break;
+                case("o"):
+                    o(data_mem);
                     break;
                 default:
                     return 0;
@@ -432,6 +438,7 @@ class lab3 {
             //handle error statements
             if(mCodes.get(PC).contains(":") == false){
                 String[] splitLine = mCodes.get(PC).split(" ");
+                System.out.println(Arrays.toString(splitLine));
                 
                 if(splitLine[0].equals("000000")){
                     ret = rTypeFuncs(splitLine, funcs, reg_file);
@@ -634,7 +641,24 @@ class lab3 {
 
         public static void s(int steps) { 
             System.out.println("\t" + steps + " instruction(s) executed");
-        } 
+        }
+
+        public static void o(int[] data_mem) {
+            int i = 0;
+            try {
+                BufferedWriter bw = new BufferedWriter(new FileWriter("coordinates.csv", true));
+                while (data_mem[i] != 0) {
+                    bw.append(Integer.toString(data_mem[i++]));
+                    bw.append(", ");
+                    bw.append(Integer.toString(data_mem[i++]));
+                    bw.append("\n");
+                }
+                bw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
 
 
 }  
