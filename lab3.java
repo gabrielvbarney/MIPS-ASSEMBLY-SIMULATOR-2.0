@@ -4,6 +4,7 @@
 
 import java.io.*;
 import java.util.*;
+import java.lang.*;
 
 class lab3 {
     
@@ -75,6 +76,9 @@ class lab3 {
     }};
 
     static int PC = 0;
+    static int PREDICTIONS = 0;
+    static int CORRECT_PREDICTIONS = 0;    
+
     public static void main(String args[]) {
     
         Map<String, String> labels = new HashMap<String, String>();
@@ -82,6 +86,22 @@ class lab3 {
         int [] data_mem = new int [8192];
         int [] reg_file = new int [32];
         MIPSfuncs funcs = new MIPSfuncs();
+        int[] GHR = new int[Integer.parseInt(args[2])];
+        ArrayList<ArrayList<Integer>> predictor_table = new ArrayList<ArrayList<Integer>>();
+    
+        
+        // need conditional for no specification on args (2, 4, 8)
+
+        for (int i = 0; i < Math.pow(2, GHR.length); i++) {
+            ArrayList<Integer> predictor_row = new ArrayList<Integer>();
+            for (int j = 0; j < GHR.length; j++) {
+                predictor_row.add(0);    
+            }
+            predictor_table.add(predictor_row);
+        }
+
+        System.out.println(args[2]);
+        System.out.println(predictor_table);
 
         try {
             File file = new File(args[0]);
@@ -438,7 +458,7 @@ class lab3 {
             //handle error statements
             if(mCodes.get(PC).contains(":") == false){
                 String[] splitLine = mCodes.get(PC).split(" ");
-                System.out.println(Arrays.toString(splitLine));
+            //    System.out.println(Arrays.toString(splitLine));
                 
                 if(splitLine[0].equals("000000")){
                     ret = rTypeFuncs(splitLine, funcs, reg_file);
@@ -478,6 +498,7 @@ class lab3 {
 
         private static int iTypeFuncs(String [] splitline, MIPSfuncs funcs, int [] reg_file, int [] data_mem) {
             String opCode = splitline[0];
+            int branch_return = 0;
         
             int rs = Integer.parseInt(splitline[1], 2);
             int rt = Integer.parseInt(splitline[2], 2);
@@ -495,12 +516,20 @@ class lab3 {
                     funcs.addi(reg_file, rs, rt, imm);
                     break;
                 case "000100":
-                    return funcs.beq(reg_file, rs, rt, imm, PC);
-                    
+                    PREDICTIONS++;
+                    branch_return = funcs.beq(reg_file, rs, rt, imm, PC);
+                    if (branch_return != 1) {
+                        //CORRECT_PREDICTIONS++;
+                    }
+                    return branch_return;
                     //break;
                 case "000101":
-                    return funcs.bne(reg_file, rs, rt, imm, PC);
-                    
+                    PREDICTIONS++;
+                    branch_return = funcs.bne(reg_file, rs, rt, imm, PC);
+                    if (branch_return != 1) {
+                        //CORRECT_PREDICTIONS++;
+                    }
+                    return branch_return; 
                     //break;
                 case "100011":
                     funcs.lw(reg_file, data_mem, rs, rt, imm);
