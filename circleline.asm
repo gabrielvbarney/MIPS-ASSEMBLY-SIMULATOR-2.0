@@ -6,17 +6,27 @@ main:
 	and $a1, $0, $0
 	and $a2, $0, $0
    
-    and $v0, $0, $0 
-    and $s1, $0, $0 ###
+#    and $v0, $0, $0 
+#    and $s1, $0, $0 ###
+#    and $s1, $0, $0
 
 	addi $a0, $0, 30
 	addi $a1, $0, 100
 	addi $a2, $0, 20
 
+#    sw $ra, 0($sp)
+    
 	jal Circle	#head
 
-    add $s1, $v0, $0
-    and $v0, $v0, $0
+#    and $ra, $ra, $0
+
+  #  add $s1, $v0, $0
+  #  and $v0, $v0, $0
+ 
+#   add $s1, $v0, $0
+  #  and $sp, $0, $0
+  #  add $sp, $sp, $s1
+ #   and $v0, $v0, $0
 
 	and $a0, $0, $0
 	and $a1, $0, $0
@@ -27,11 +37,16 @@ main:
 	addi $a1, $0, 80
 	addi $a2, $0, 30
 	addi $a3, $0, 30
+    
+#    sw $ra, 0($sp)
 
 	jal Line 	#body
 
-    add $s1, $v0, $0
-    and $v0, $v0, $0
+#    add $s1, $v0, $0
+#    and $v0, $v0, $0
+
+#    add $s1, $v0, $0
+#    and $v0, $v0, $0
 	
     and $a0, $0, $0
 	and $a1, $0, $0
@@ -43,10 +58,10 @@ main:
 	addi $a2, $0, 30
 	addi $a3, $0, 30
 
-#	jal Line 	#left leg
+	jal Line 	#left leg
 
-    add $s1, $s1, $v0
-    and $v0, $v0, $0
+#    add $s1, $s1, $v0
+#    and $v0, $v0, $0
 	
     and $a0, $0, $0
 	and $a1, $0, $0
@@ -58,7 +73,7 @@ main:
 	addi $a2, $0, 30
 	addi $a3, $0, 30
 
-#	jal Line 	#right leg
+	jal Line 	#right leg
 
 #    add $s1, $s1, $v0
 #    and $v0, $v0, $0
@@ -73,7 +88,7 @@ main:
 	addi $a2, $0, 30
 	addi $a3, $0, 50
 
-#	jal Line 	#left leg
+	jal Line 	#left leg
 
 #    add $s1, $s1, $v0
 #    and $v0, $v0, $0
@@ -88,12 +103,12 @@ main:
 	addi $a2, $0, 45
 	addi $a3, $0, 60
 
-#	jal Line 	#right leg
+	jal Line 	#right leg
 
  #   add $s1, $s1, $v0
  #   and $v0, $v0, $0
 	
-    add $sp, $0, $0
+#    add $sp, $0, $0
 	and $a0, $0, $0
 	and $a1, $0, $0
 	and $a2, $0, $0
@@ -102,12 +117,12 @@ main:
 	addi $a1, $0, 105
 	addi $a2, $0, 3
 
-#	jal Circle	#left eye
+	jal Circle	#left eye
 
  #   add $s1, $s1, $v0
  #   and $v0, $v0, $0
 	
-    add $sp, $0, $0
+#    add $sp, $0, $0
 	and $a0, $0, $0
 	and $a1, $0, $0
 	and $a2, $0, $0
@@ -116,7 +131,7 @@ main:
 	addi $a1, $0, 105
 	addi $a2, $0, 3
 
-#	jal Circle	#right eye
+	jal Circle	#right eye
 
   #  add $s1, $s1, $v0
   #  and $v0, $v0, $0
@@ -131,7 +146,7 @@ main:
 	addi $a2, $0, 35
 	addi $a3, $0, 90
 
-#	jal Line 	#mouth center
+	jal Line 	#mouth center
 
  #   add $s1, $s1, $v0
  #   and $v0, $v0, $0
@@ -146,12 +161,12 @@ main:
 	addi $a2, $0, 20
 	addi $a3, $0, 95
 
-#	jal Line 	#mouth left
+	jal Line 	#mouth left
 
 #	and $a0, $0, $0
 #    add $s1, $s1, $v0
     
-    and $v0, $v0, $0
+#    and $v0, $v0, $0
 	and $a1, $0, $0
 	and $a2, $0, $0
 	and $a3, $0, $0
@@ -161,24 +176,33 @@ main:
 	addi $a2, $0, 40
 	addi $a3, $0, 95
 
-#	jal Line 	#mouth right
+	jal Line 	#mouth right
 
 	j exit
 
 
 Circle:
 
-add $sp, $s1, $0
+and $t0, $0, $0
+and $t1, $0, $0
+and $t2, $0, $0
+and $t3, $0, $0
+and $t4, $0, $0
+and $t5, $0, $0
+and $t6, $0, $0
+and $t7, $0, $0
+
+#add $sp, $s1, $0
 
 addi $t0, $t0, 0	# x= 0
 add $t1, $t1, $a2	# y = r
 sll $t4, $t1, 1		# 2*r
-addi $t3, $t3, 3	# 3
+addi $t3, $0, 3	# 3
 sub $t3, $t3, $t4 	#g = 3-2*r
 sll $t4, $t1, 2		#4*r
-addi $t5, $t5, 10	# 10
+addi $t5, $0, 10	# 10
 sub $t5, $t5, $t4 	#diagonalInc = 10-4*r
-addi $t6, $t6, 6	# rightInc = 6
+addi $t6, $0, 6	# rightInc = 6
 
 loop:
 
@@ -266,7 +290,7 @@ beq $t4, $0, loop
 
 end:
 
-add $v0, $sp, $0 
+#add $v0, $s1, $0 
 jr $ra
 
 
@@ -274,13 +298,24 @@ jr $ra
 Line:
 # x0 = $a0, y0 = $a1, x1 = $a2, y1 = $a3
 
-add $sp, $s1, $0
+#add $sp, $s1, $0
 
-and $s7, $s7, $0
+and $t0, $0, $0
+and $t1, $0, $0
+and $t2, $0, $0
+and $t3, $0, $0
+and $t4, $0, $0
+and $t5, $0, $0
+and $t6, $0, $0
+and $t7, $0, $0
+and $s2, $0, $0
+and $s3, $0, $0
+and $s7, $0, $0 # s7 og
+
 addi $s7, $s7, 1 #s7 = 1
 
-sub $t0, $a3, $a1
-sub $t1, $a2, $a0
+sub $t0, $a3, $a1 # y vals
+sub $t1, $a2, $a0 # x vals
 
 add $t2, $0, $t0 # abs values
 add $t3, $0, $t1
@@ -299,12 +334,12 @@ abs2:
 
 slt $t6, $t3, $t2
 beq $t6, $s7,  st1 #this is where the error is, store the 1
-addi $t7, $t7, 0
+addi $t7, $0, 0
 j stj
 
 st1:
 
-addi $t7, $t7, 1	# $t7 = st
+addi $t7, $0, 1	# $t7 = st
 
 stj:
 
@@ -337,7 +372,9 @@ and $t1, $t1, $0
 st0:
 
 slt $t0, $a2, $a0
-bne $t0, $s7, deltax	# if x1 > x0, skip to place where assigning deltax
+beq $t0, $0, deltax	# if x1 > x0, skip to place where assigning deltax
+
+and $t0, $0, $0
 
 add $t0, $t0, $a0	# swap x0 (a0), x1 (a2)
 and $a0, $a0, $0
@@ -388,7 +425,7 @@ and $t5, $t5, $0    # t5 = error
 #sub $s2, $a2, $a0   #s2 = counter
 
 add $s2, $s2, $a0
-addi $s3, $a2, 0
+addi $s3, $a2, 1
 
 looper:
 
@@ -426,7 +463,7 @@ j looper
 
 end2:
 
-add $v0, $sp, $0 
+#add $v0, $s1, $0 
 jr $ra
 
 exit:
