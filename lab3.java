@@ -86,22 +86,43 @@ class lab3 {
         int [] data_mem = new int [8192];
         int [] reg_file = new int [32];
         MIPSfuncs funcs = new MIPSfuncs();
-        int[] GHR = new int[Integer.parseInt(args[2])];
-        ArrayList<ArrayList<Integer>> predictor_table = new ArrayList<ArrayList<Integer>>();
-    
+        int GHRval = 2;
+        boolean scriptFlag = false;
+        //check arguments
+        //script + number --> 3 Integer.parseInt(args[2])
+        //script + no num --> 2
+        //no script + num --> 2
+        //no script + no num --> 1
         
-        // need conditional for no specification on args (2, 4, 8)
 
-        for (int i = 0; i < Math.pow(2, GHR.length); i++) {
-            ArrayList<Integer> predictor_row = new ArrayList<Integer>();
-            for (int j = 0; j < GHR.length; j++) {
-                predictor_row.add(0);    
+        if(args.length == 3){
+            GHRval = Integer.parseInt(args[2]);
+            scriptFlag = true;
+        }else if( args.length == 2){
+
+            try{
+                GHRval = Integer.parseInt(args[1]);
+                scriptFlag = false;
             }
-            predictor_table.add(predictor_row);
+            catch(Exception e)
+            {
+                scriptFlag = true;
+                GHRval = 2;
+            }
         }
 
-        System.out.println(args[2]);
-        System.out.println(predictor_table);
+        int[] GHR = new int[GHRval];
+
+        Arrays.fill(GHR, 0);
+        int numRows = (int)Math.pow(2, GHR.length);
+
+        int[][] predictor_table = new int[numRows][GHR.length];
+
+        for (int i = 0; i < Math.pow(2, GHR.length); i++) {
+            int[] predictor_row = new int[2];
+            Arrays.fill(predictor_row, 0);
+            predictor_table[i] = predictor_row;
+        }
 
         try {
             File file = new File(args[0]);
@@ -121,13 +142,13 @@ class lab3 {
 
             mCodes = makeMachineCode(labels, instructions, mCodes);
         
-            if (args.length > 1) {
+            if (scriptFlag == true ) {
                 // script
                 File script = new File(args[1]);
                 FileReader sread = new FileReader(script);
                 BufferedReader sbread = new BufferedReader(sread);
             
-                script_output(sbread, data_mem, reg_file, funcs, mCodes);
+                script_output(sbread, data_mem, reg_file, funcs, mCodes, GHR, predictor_table);
                 sread.close();
 
             } else {
@@ -137,7 +158,7 @@ class lab3 {
                 while (ret != -1) {
                     System.out.print("mips> ");
                     String cmd = command.nextLine();
-                    ret = command_output(cmd, data_mem, reg_file, funcs, mCodes); 
+                    ret = command_output(cmd, data_mem, reg_file, funcs, mCodes, GHR, predictor_table); 
                     if (ret == -2) {  
                         Arrays.fill(data_mem, 0);
                         Arrays.fill(reg_file, 0);
@@ -152,11 +173,13 @@ class lab3 {
             }
     }
 
-    public static int command_output(String cmd, int[] data_mem, int[] reg_file, MIPSfuncs funcs, ArrayList<String> mCodes) {
+    public static int command_output(String cmd, int[] data_mem, int[] reg_file, MIPSfuncs funcs, ArrayList<String> mCodes, int [] GHR, int [][] predictor_table) {
         
         String[] splitLine;            
         splitLine = cmd.split(" ");
         int i = 0;
+        int row = 0;
+        ArrayList<int []> ret = new ArrayList<int []>();
             
         switch(splitLine[0]) {
             case("h"):
@@ -174,7 +197,13 @@ class lab3 {
             case("r"):
                 i = PC;
                 while ( i < mCodes.size()){
-                    parseMCode(mCodes, reg_file, data_mem, funcs);
+                    row = calc_row_index(GHR);
+                    int [] predictor_row = predictor_table[row];
+                    ret = parseMCode(mCodes, reg_file, data_mem, funcs, GHR, predictor_row);
+
+                    GHR = ret.get(0);
+                    predictor_table[row] = ret.get(1);
+
                     i = PC;
                 }
                 return i;
@@ -182,29 +211,54 @@ class lab3 {
                 if (splitLine.length > 1) {
                     i = Integer.parseInt(splitLine[1]);
                     while (i > 0) {
-                        parseMCode(mCodes, reg_file, data_mem, funcs);
+                        row = calc_row_index(GHR);
+                        int [] predictor_row = predictor_table[row];
+
+                        ret = parseMCode(mCodes, reg_file, data_mem, funcs, GHR, predictor_row);
+
+                        GHR = ret.get(0);
+                        predictor_table[row] = ret.get(1);
+
                         i--;
                     }
                     s(Integer.parseInt(splitLine[1]));
                     break;
                 } else {
-                    parseMCode(mCodes, reg_file, data_mem, funcs);
+                    row = calc_row_index(GHR);
+                    int [] predictor_row = predictor_table[row];
+
+                    ret = parseMCode(mCodes, reg_file, data_mem, funcs, GHR, predictor_row);
+
+                    GHR = ret.get(0);
+                    predictor_table[row] = ret.get(1);
+
                     s(1);
                     break;
                 }
             case("o"):
                 o(data_mem);
                 break;
+            case("b"):
+                System.out.println("");
+                float accuracy = ((float)CORRECT_PREDICTIONS/(float)PREDICTIONS)* 100;
+                System.out.print("accuracy ");
+                System.out.printf("%.2f", accuracy);
+                System.out.println("% (" + CORRECT_PREDICTIONS + " correct predictions, " + PREDICTIONS + " predictions)");
+                System.out.println("");                    
+                break;
+
             default:
                 return -1;
             }
             return 0;
     }
 
-    public static int script_output(BufferedReader sbread, int[] data_mem, int[] reg_file, MIPSfuncs funcs, ArrayList<String> mCodes) {
+    public static int script_output(BufferedReader sbread, int[] data_mem, int[] reg_file, MIPSfuncs funcs, ArrayList<String> mCodes, int [] GHR, int [][] predictor_table) {
         String line;
         String[] splitLine;  
         int i = 0; 
+        int row = 0;
+        ArrayList<int []> ret = new ArrayList<int []>();
         try {     
         while ((line = sbread.readLine()) != null) {
             splitLine = line.split(" ");
@@ -238,8 +292,16 @@ class lab3 {
                     break;
                 case("r"):
                     i = PC;
+
                     while ( i < mCodes.size()){
-                        parseMCode(mCodes, reg_file, data_mem, funcs);
+
+                        row = calc_row_index(GHR);
+                        int [] predictor_row = predictor_table[row];
+                        
+                        ret = parseMCode(mCodes, reg_file, data_mem, funcs, GHR, predictor_row);
+
+                        GHR = ret.get(0);
+                        predictor_table[row] = ret.get(1);
                         i = PC;
                     }
                     break;
@@ -247,17 +309,37 @@ class lab3 {
                     if (splitLine.length > 1) { // probably have to work with pc value returned 
                         i = Integer.parseInt(splitLine[1]);
                         while (i > 0) {
-                            parseMCode(mCodes, reg_file, data_mem, funcs);
+
+                            row = calc_row_index(GHR);
+                            int [] predictor_row = predictor_table[row];
+
+                            ret = parseMCode(mCodes, reg_file, data_mem, funcs, GHR, predictor_row);
+                            GHR = ret.get(0);
+                            predictor_table[row] = ret.get(1);
                             i--;
                         }
                         s(Integer.parseInt(splitLine[1]));
                     } else {
-                        parseMCode(mCodes, reg_file, data_mem, funcs);
+                        row = calc_row_index(GHR);
+                        int [] predictor_row = predictor_table[row];
+
+                        ret = parseMCode(mCodes, reg_file, data_mem, funcs, GHR, predictor_row);
+                        GHR = ret.get(0);
+                        predictor_table[row] = ret.get(1);
                         s(1);
                     }
                     break;
                 case("o"):
                     o(data_mem);
+                    break;
+
+                case("b"):
+                    System.out.println("");
+                    float accuracy = ((float)CORRECT_PREDICTIONS/(float)PREDICTIONS)* 100;
+                    System.out.print("accuracy ");
+                    System.out.printf("%.2f", accuracy);
+                    System.out.println("% (" + CORRECT_PREDICTIONS + " correct predictions, " + PREDICTIONS + " predictions)");
+                    System.out.println("");                    
                     break;
                 default:
                     return 0;
@@ -268,7 +350,7 @@ class lab3 {
             e.printStackTrace();
         }
         return 0;
-}
+    }
     // method for first pass
     public static int getLabelAddresses(String line, int hexAddress, 
         Map<String, String> labels, ArrayList<ArrayList <String>> instructions) {
@@ -452,9 +534,17 @@ class lab3 {
             return newOffset;
         }
 
-        public static void parseMCode(ArrayList<String> mCodes, int [] reg_file, int [] data_mem, MIPSfuncs funcs){
+        public static ArrayList<int []> parseMCode(ArrayList<String> mCodes, int [] reg_file, int [] data_mem, MIPSfuncs funcs, 
+                                                        int [] GHR, int [] predictor_row){
             
             int ret = 0;  
+            boolean taken = false;
+            boolean w_taken = false;
+            boolean ntaken = false;
+            boolean w_ntaken = false;
+
+            ArrayList<int[]> branchRET = new ArrayList<int[]> ();
+            
             //handle error statements
             if(mCodes.get(PC).contains(":") == false){
                 String[] splitLine = mCodes.get(PC).split(" ");
@@ -463,13 +553,121 @@ class lab3 {
                 if(splitLine[0].equals("000000")){
                     ret = rTypeFuncs(splitLine, funcs, reg_file);
                 } else if(splitLine.length == 4){
+                    //put("beq", "000100");
+                    //put("bne", "000101");
+                    
+                    if(splitLine[0].equals("000100") || splitLine[0].equals("000101")){
+                        taken = false;
+                        w_taken = false;
+                        ntaken = false;
+                        w_ntaken = false;
+
+                        PREDICTIONS++;
+                        if(predictor_row[0] == 1 && predictor_row[1] == 1){
+                            taken = true;
+                        }
+                        else if (predictor_row[0] == 1 && predictor_row[1] == 0){
+                            w_taken = true;
+                        }
+                        else if (predictor_row[0] == 0 && predictor_row[1] == 1){
+                            w_ntaken = true;
+                        }
+                        else if (predictor_row[0] == 0 && predictor_row[1] == 0){
+                            ntaken = true;
+                        }
+                    }
+
                     ret = iTypeFuncs(splitLine, funcs, reg_file, data_mem);
+                    
+                    //if ret is 1 --> branch not taken
+                    if(ret != 1){
+                        //branch taken
+                        GHR = update_GHR(1, GHR);
+                        
+                        if(w_ntaken == true || ntaken == true || w_taken == true){
+                           
+                            predictor_row = update_predictor(predictor_row, 1);
+                        }
+                        if(taken == true || w_taken == true){
+                            CORRECT_PREDICTIONS++;
+                        }
+                    }
+                    else{
+                        if(splitLine[0].equals("000100") || splitLine[0].equals("000101")){
+                            GHR = update_GHR(0, GHR);
+                            if(w_ntaken == true || taken == true || w_taken == true){
+                                
+                                predictor_row = update_predictor(predictor_row, -1);
+                            }
+                            if(ntaken == true || w_ntaken == true){
+                                CORRECT_PREDICTIONS++;
+                            }
+                        }    
+                    }
+
                 } else if(splitLine.length == 2){
                     ret = jTypeFuncs(splitLine, funcs, reg_file);
                 }
             }        
             PC = PC + ret;
+            
+            branchRET.add(0, GHR);
+            branchRET.add(1, predictor_row);
+            
+            return branchRET;
         }
+
+        public static int calc_row_index(int [] GHR){
+            String binaryString = "";
+            for(int i = 0; i < GHR.length; i++){
+                binaryString = binaryString.concat(Integer.toString(GHR[i]));
+            }
+
+            int decimal = Integer.parseInt(binaryString,2);
+
+            return decimal;
+        }
+
+
+        public static int [] update_GHR(int val, int [] GHR){
+            
+            for (int i = 0; i < GHR.length - 1; i++){
+                GHR[i] = GHR[i + 1];
+            } 
+          
+            GHR[GHR.length - 1] = val;
+            return GHR;
+        }
+        public static int [] update_predictor(int[] predictor_row, int x){
+          
+            int row_value = calc_row_index(predictor_row);
+            row_value+=x;
+
+            switch(row_value) {
+                case(0):
+                    predictor_row[0] = 0;
+                    predictor_row[1] = 0;
+                    break;
+                case(1):
+                    predictor_row[0] = 0;
+                    predictor_row[1] = 1;
+                    break;
+                case(2):
+                    predictor_row[0] = 1;
+                    predictor_row[1] = 0;
+                    break;
+                
+                case(3):
+                    predictor_row[0] = 1;
+                    predictor_row[1] = 1;
+                    break;
+                default:
+                    predictor_row[0] = 6;
+                    predictor_row[1] = 6;
+            }
+            return predictor_row;
+        }
+
 
         private static int jTypeFuncs(String [] splitline, MIPSfuncs funcs, int [] reg_file) {
             String opCode = splitline[0];
@@ -491,8 +689,6 @@ class lab3 {
                     System.out.println("Error in jTypeFuncs"+ Arrays.toString(splitline));
                     break;
             }
-            System.out.println("--------------\n");
-
             return 1;
         }
 
@@ -516,21 +712,15 @@ class lab3 {
                     funcs.addi(reg_file, rs, rt, imm);
                     break;
                 case "000100":
-                    PREDICTIONS++;
+
                     branch_return = funcs.beq(reg_file, rs, rt, imm, PC);
-                    if (branch_return != 1) {
-                        //CORRECT_PREDICTIONS++;
-                    }
                     return branch_return;
-                    //break;
+
                 case "000101":
-                    PREDICTIONS++;
+             
                     branch_return = funcs.bne(reg_file, rs, rt, imm, PC);
-                    if (branch_return != 1) {
-                        //CORRECT_PREDICTIONS++;
-                    }
                     return branch_return; 
-                    //break;
+       
                 case "100011":
                     funcs.lw(reg_file, data_mem, rs, rt, imm);
                     break;
