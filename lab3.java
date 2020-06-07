@@ -86,7 +86,32 @@ class lab3 {
         int [] data_mem = new int [8192];
         int [] reg_file = new int [32];
         MIPSfuncs funcs = new MIPSfuncs();
-        int[] GHR = new int[Integer.parseInt(args[2])];
+        int GHRval = 2;
+        boolean scriptFlag = false;
+        //check arguments
+        //script + number --> 3 Integer.parseInt(args[2])
+        //script + no num --> 2
+        //no script + num --> 2
+        //no script + no num --> 1
+        
+
+        if(args.length == 3){
+            GHRval = Integer.parseInt(args[2]);
+            scriptFlag = true;
+        }else if( args.length == 2){
+
+            try{
+                GHRval = Integer.parseInt(args[1]);
+                scriptFlag = false;
+            }
+            catch(Exception e)
+            {
+                scriptFlag = true;
+                GHRval = 2;
+            }
+        }
+
+        int[] GHR = new int[GHRval];
 
         Arrays.fill(GHR, 0);
         int numRows = (int)Math.pow(2, GHR.length);
@@ -117,7 +142,7 @@ class lab3 {
 
             mCodes = makeMachineCode(labels, instructions, mCodes);
         
-            if (args.length > 1) {
+            if (scriptFlag == true ) {
                 // script
                 File script = new File(args[1]);
                 FileReader sread = new FileReader(script);
@@ -213,6 +238,15 @@ class lab3 {
             case("o"):
                 o(data_mem);
                 break;
+            case("b"):
+                System.out.println("");
+                float accuracy = ((float)CORRECT_PREDICTIONS/(float)PREDICTIONS)* 100;
+                System.out.print("accuracy ");
+                System.out.printf("%.2f", accuracy);
+                System.out.println("% (" + CORRECT_PREDICTIONS + " correct predictions, " + PREDICTIONS + " predictions)");
+                System.out.println("");                    
+                break;
+
             default:
                 return -1;
             }
@@ -304,7 +338,6 @@ class lab3 {
                     float accuracy = ((float)CORRECT_PREDICTIONS/(float)PREDICTIONS)* 100;
                     System.out.print("accuracy ");
                     System.out.printf("%.2f", accuracy);
-                    //System.out.print(df.format(accuracy));
                     System.out.println("% (" + CORRECT_PREDICTIONS + " correct predictions, " + PREDICTIONS + " predictions)");
                     System.out.println("");                    
                     break;
