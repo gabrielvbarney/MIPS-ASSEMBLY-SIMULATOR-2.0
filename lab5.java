@@ -6,7 +6,7 @@ import java.io.*;
 import java.util.*;
 import java.lang.*;
 
-class lab3 {
+class lab5 {
     
     // starting address: 0x00400000, but for this assignment start at zero
     static Map<String, String> opCodes = new HashMap<String, String>() {{

@@ -1,3 +1,3 @@
 lab5:
-	javac lab3.java
+	javac lab5.java
 	javac MIPSfuncs.java
