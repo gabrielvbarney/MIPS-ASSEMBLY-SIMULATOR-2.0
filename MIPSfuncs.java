@@ -95,7 +95,8 @@ public class MIPSfuncs {
     public int beq(int[] reg_file, int rs, int rt, int imm, int PC){
         int rs_val = readReg(reg_file, rs);
         int rt_val = readReg(reg_file, rt);
-       
+        
+        
         if (rs_val == rt_val) {
             //return PC + 1 + imm;
             return 1 + imm;
@@ -105,6 +106,8 @@ public class MIPSfuncs {
     public int bne(int[] reg_file, int rs, int rt, int imm, int PC){
         int rs_val = readReg(reg_file, rs);
         int rt_val = readReg(reg_file, rt);
+
+       
         if (rs_val != rt_val) {
             return 1 + imm;
         }

@@ -274,19 +274,19 @@ class lab3 {
                     while ( i < mCodes.size()){
 
                         row = calc_row_index(GHR);
-                        System.out.println("row : " + row);
+                        //System.out.println("row : " + row);
                         int [] predictor_row = predictor_table[row];
-                        System.out.println("predictor row : " + Arrays.toString(predictor_row));
+                        //System.out.println("predictor row : " + Arrays.toString(predictor_row));
                         
                         ret = parseMCode(mCodes, reg_file, data_mem, funcs, GHR, predictor_row);
 
-                        System.out.println("------run instruction--------");
-                        System.out.println("row : " + row);
-                        for (int z = 0; z < ret.size(); z++){
+                        //System.out.println("------run instruction--------");
+                        //System.out.println("row : " + row);
+                        //for (int z = 0; z < ret.size(); z++){
                             
-                            System.out.println(Arrays.toString(ret.get(z)));
-                        }
-                        System.out.println("--------------");
+                            //System.out.println(Arrays.toString(ret.get(z)));
+                        //}
+                        //System.out.println("--------------");
                         
 
                         //System.out.println(ret);
@@ -327,6 +327,7 @@ class lab3 {
                 case("b"):
                    
                     System.out.print(" Correct : " + CORRECT_PREDICTIONS);
+                    System.out.print(" total : " + PREDICTIONS);
                     //61.79% (8360 correct predictions, 13529 predictions)
                     
                     
@@ -544,9 +545,9 @@ class lab3 {
                     
                     if(splitLine[0].equals("000100") || splitLine[0].equals("000101")){
                         taken = false;
-
+                        PREDICTIONS++;
                         if(predictor_row[0] == 1){
-                            PREDICTIONS++;
+                            
                             taken = true;
                         }
                     }
@@ -555,21 +556,28 @@ class lab3 {
                     
                     //if ret is 1 --> branch not taken
                     if(ret != 1){
+                        //branch taken
                         GHR = update_GHR(1, GHR);
                         
                         if(taken == false){
-                            predictor_row = update_predictor(predictor_row);
+                            //System.out.println("predicted: NT , actual: T");
+                            predictor_row = update_predictor(predictor_row, 1);
                         }else{
                             CORRECT_PREDICTIONS++;
                         }
                     }
                     else{
-                        GHR = update_GHR(0, GHR);
-                        if(taken == true){
-                            predictor_row = update_predictor(predictor_row);
-                        }else{
-                            CORRECT_PREDICTIONS++;
-                        }
+                        if(splitLine[0].equals("000100") || splitLine[0].equals("000101")){
+                            GHR = update_GHR(0, GHR);
+                            if(taken == true){
+                                //System.out.println("predicted: NT , actual: T");
+                                predictor_row = update_predictor(predictor_row, -1);
+                            }else{
+                           
+                                CORRECT_PREDICTIONS++;
+                            
+                            }
+                        }    
                     }
 
                     
@@ -608,20 +616,39 @@ class lab3 {
             GHR[GHR.length - 1] = val;
             return GHR;
         }
-        public static int [] update_predictor(int[] predictor_row){
+        public static int [] update_predictor(int[] predictor_row, int x){
             //shift vals to the left
-            System.out.println("~~~~~~~~~~change predictor~~~~~~~~~~~");
+            //System.out.println("~~~~~~~~~~change predictor~~~~~~~~~~~");
+            //System.out.println(" old pred row : " + predictor_row);
             int row_value = calc_row_index(predictor_row);
-            System.out.println("OG value :" + row_value);
-            row_value++;
-            System.out.println("new value :" + row_value);
-            
-            String binaryString = Integer.toBinaryString(row_value,);
-            System.out.println("binary string :" + binaryString);
-            for(int i = 0; i < 2; i++){
-                predictor_row[i] = binaryString.indexOf(i);
+            //System.out.println("OG value :" + row_value);
+            row_value+=x;
+            //System.out.println("new value :" + row_value);
+            switch(row_value) {
+                case(0):
+                    predictor_row[0] = 0;
+                    predictor_row[1] = 0;
+                    break;
+                case(1):
+                    predictor_row[0] = 0;
+                    predictor_row[1] = 1;
+                    break;
+                case(2):
+                    predictor_row[0] = 1;
+                    predictor_row[1] = 0;
+                    break;
+                
+                case(3):
+                    predictor_row[0] = 1;
+                    predictor_row[1] = 1;
+                    break;
+                default:
+                    predictor_row[0] = 6;
+                    predictor_row[1] = 6;
             }
-            System.out.println("~~~~~~~~~~change predictor~~~~~~~~~~~");
+
+            //System.out.println(" new pred row : " + predictor_row);
+            //System.out.println("~~~~~~~~~~change predictor~~~~~~~~~~~");
             return predictor_row;
         }
 
