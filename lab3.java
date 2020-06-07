@@ -89,27 +89,15 @@ class lab3 {
         int[] GHR = new int[Integer.parseInt(args[2])];
 
         Arrays.fill(GHR, 0);
-        
         int numRows = (int)Math.pow(2, GHR.length);
+
         int[][] predictor_table = new int[numRows][GHR.length];
-        //ArrayList<ArrayList<Integer>> predictor_table = new ArrayList<ArrayList<Integer>>();
-        
-        
-        // need conditional for no specification on args (2, 4, 8)
 
         for (int i = 0; i < Math.pow(2, GHR.length); i++) {
-            //ArrayList<Integer> predictor_row = new ArrayList<Integer>();
             int[] predictor_row = new int[2];
             Arrays.fill(predictor_row, 0);
             predictor_table[i] = predictor_row;
         }
-
-        /*
-        System.out.println(args[2]);
-        for (int j = 0; j < predictor_table.length; j++) {
-            System.out.println(Arrays.toString(predictor_table[j]));
-        }
-        */
 
         try {
             File file = new File(args[0]);
@@ -274,22 +262,9 @@ class lab3 {
                     while ( i < mCodes.size()){
 
                         row = calc_row_index(GHR);
-                        //System.out.println("row : " + row);
                         int [] predictor_row = predictor_table[row];
-                        //System.out.println("predictor row : " + Arrays.toString(predictor_row));
                         
                         ret = parseMCode(mCodes, reg_file, data_mem, funcs, GHR, predictor_row);
-
-                        //System.out.println("------run instruction--------");
-                        //System.out.println("row : " + row);
-                        //for (int z = 0; z < ret.size(); z++){
-                            
-                            //System.out.println(Arrays.toString(ret.get(z)));
-                        //}
-                        //System.out.println("--------------");
-                        
-
-                        //System.out.println(ret);
 
                         GHR = ret.get(0);
                         predictor_table[row] = ret.get(1);
@@ -325,12 +300,13 @@ class lab3 {
                     break;
 
                 case("b"):
-                   
-                    System.out.print(" Correct : " + CORRECT_PREDICTIONS);
-                    System.out.print(" total : " + PREDICTIONS);
-                    //61.79% (8360 correct predictions, 13529 predictions)
-                    
-                    
+                    System.out.println("");
+                    float accuracy = ((float)CORRECT_PREDICTIONS/(float)PREDICTIONS)* 100;
+                    System.out.print("accuracy ");
+                    System.out.printf("%.2f", accuracy);
+                    //System.out.print(df.format(accuracy));
+                    System.out.println("% (" + CORRECT_PREDICTIONS + " correct predictions, " + PREDICTIONS + " predictions)");
+                    System.out.println("");                    
                     break;
                 default:
                     return 0;
@@ -341,7 +317,7 @@ class lab3 {
             e.printStackTrace();
         }
         return 0;
-}
+    }
     // method for first pass
     public static int getLabelAddresses(String line, int hexAddress, 
         Map<String, String> labels, ArrayList<ArrayList <String>> instructions) {
@@ -530,6 +506,10 @@ class lab3 {
             
             int ret = 0;  
             boolean taken = false;
+            boolean w_taken = false;
+            boolean ntaken = false;
+            boolean w_ntaken = false;
+
             ArrayList<int[]> branchRET = new ArrayList<int[]> ();
             
             //handle error statements
@@ -545,10 +525,22 @@ class lab3 {
                     
                     if(splitLine[0].equals("000100") || splitLine[0].equals("000101")){
                         taken = false;
+                        w_taken = false;
+                        ntaken = false;
+                        w_ntaken = false;
+
                         PREDICTIONS++;
-                        if(predictor_row[0] == 1){
-                            
+                        if(predictor_row[0] == 1 && predictor_row[1] == 1){
                             taken = true;
+                        }
+                        else if (predictor_row[0] == 1 && predictor_row[1] == 0){
+                            w_taken = true;
+                        }
+                        else if (predictor_row[0] == 0 && predictor_row[1] == 1){
+                            w_ntaken = true;
+                        }
+                        else if (predictor_row[0] == 0 && predictor_row[1] == 0){
+                            ntaken = true;
                         }
                     }
 
@@ -559,29 +551,26 @@ class lab3 {
                         //branch taken
                         GHR = update_GHR(1, GHR);
                         
-                        if(taken == false){
-                            //System.out.println("predicted: NT , actual: T");
+                        if(w_ntaken == true || ntaken == true || w_taken == true){
+                           
                             predictor_row = update_predictor(predictor_row, 1);
-                        }else{
+                        }
+                        if(taken == true || w_taken == true){
                             CORRECT_PREDICTIONS++;
                         }
                     }
                     else{
                         if(splitLine[0].equals("000100") || splitLine[0].equals("000101")){
                             GHR = update_GHR(0, GHR);
-                            if(taken == true){
-                                //System.out.println("predicted: NT , actual: T");
+                            if(w_ntaken == true || taken == true || w_taken == true){
+                                
                                 predictor_row = update_predictor(predictor_row, -1);
-                            }else{
-                           
+                            }
+                            if(ntaken == true || w_ntaken == true){
                                 CORRECT_PREDICTIONS++;
-                            
                             }
                         }    
                     }
-
-                    
-
 
                 } else if(splitLine.length == 2){
                     ret = jTypeFuncs(splitLine, funcs, reg_file);
@@ -608,7 +597,7 @@ class lab3 {
 
 
         public static int [] update_GHR(int val, int [] GHR){
-            //shift vals to the left
+            
             for (int i = 0; i < GHR.length - 1; i++){
                 GHR[i] = GHR[i + 1];
             } 
@@ -617,13 +606,10 @@ class lab3 {
             return GHR;
         }
         public static int [] update_predictor(int[] predictor_row, int x){
-            //shift vals to the left
-            //System.out.println("~~~~~~~~~~change predictor~~~~~~~~~~~");
-            //System.out.println(" old pred row : " + predictor_row);
+          
             int row_value = calc_row_index(predictor_row);
-            //System.out.println("OG value :" + row_value);
             row_value+=x;
-            //System.out.println("new value :" + row_value);
+
             switch(row_value) {
                 case(0):
                     predictor_row[0] = 0;
@@ -646,9 +632,6 @@ class lab3 {
                     predictor_row[0] = 6;
                     predictor_row[1] = 6;
             }
-
-            //System.out.println(" new pred row : " + predictor_row);
-            //System.out.println("~~~~~~~~~~change predictor~~~~~~~~~~~");
             return predictor_row;
         }
 
@@ -673,8 +656,6 @@ class lab3 {
                     System.out.println("Error in jTypeFuncs"+ Arrays.toString(splitline));
                     break;
             }
-            System.out.println("--------------\n");
-
             return 1;
         }
 
